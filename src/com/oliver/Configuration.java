@@ -1,4 +1,4 @@
-package com.oliver.myBasicHTTPServer;
+package com.oliver;
 
 import java.io.File;
 
@@ -12,4 +12,6 @@ public class Configuration {
     public static final File RESOURCE_DIRECTORY = new File("/Users/Christopher/Documents/Web Projects/Portfolio-Site");
     /* The default file the server will serve if an HTTP request does not specify a file. */
     public static final String DEFAULT_FILE = "myportfolio.html";
+    /* The command that shuts down the server. */
+    public static final String SHUTDOWN_COMMAND = "/SHUTDOWN";
 }

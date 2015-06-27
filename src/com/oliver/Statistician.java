@@ -1,4 +1,4 @@
-package com.oliver.myBasicHTTPServer;
+package com.oliver;
 
 public class Statistician {
 

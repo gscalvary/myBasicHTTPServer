@@ -1,4 +1,4 @@
-package com.oliver.myBasicHTTPServer;
+package com.oliver;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -8,6 +8,7 @@ import java.util.Date;
 public class Engine implements Runnable {
 
     private Socket socket;
+    private static boolean shutdown = false;
 
     public Engine(Socket socket) {
 
@@ -22,13 +23,14 @@ public class Engine implements Runnable {
             System.out.println("\nHTTP Server listening on port " + Configuration.PORT + " with a queue length" +
                     " of " + Configuration.QUEUE_LENGTH + ".");
             /* Listen until the user quits the application. */
-            while(true) {
+            while(!shutdown) {
                 /* The ServerSocket accept method is a blocking call that waits for a client initiated communication. */
                 Engine engine = new Engine(serverSocket.accept());
                 /* Run each connection in its own thread to facilitate concurrency. */
                 Thread engineThread = new Thread(engine);
                 engineThread.start();
             }
+            System.out.println("\nServer shut down command received, server shut down.");
         } catch(IOException e) {
             System.err.println("Unable to connect to socket " + Configuration.PORT + ": " + e);
         }
@@ -49,31 +51,39 @@ public class Engine implements Runnable {
                 String[] request = input.split(" ");
                 /* Handle input verbs. */
                 if (request[0].toUpperCase().equals("GET")) {
+                    System.out.println("\nServing " + request[1]);
                     /* Serve up the default file if none was specified in the HTTP request. */
                     if(request[1].endsWith("/")) request[1] += Configuration.DEFAULT_FILE;
-                    System.out.println("\nServing " + request[1]);
-                    /* Get the resource and return it. */
-                    File file = new File(Configuration.RESOURCE_DIRECTORY, request[1].toLowerCase());
-                    byte[] dataToServe = new byte[(int)file.length()];
-                    try(FileInputStream fileInputStream = new FileInputStream(file)) {
-                        fileInputStream.read(dataToServe);
-                        printWriter.println("HTTP/1.1 200 OK");
-                        printWriter.println("Server: Basic HTTP Server 1.0");
-                        printWriter.println("Date: " + new Date());
-                        printWriter.println("Content-type: " + getContentType(request[1]));
-                        printWriter.println("Content-length: " + (int)file.length());
-                        printWriter.println();
-                        printWriter.flush();
-                        bufferedOutputStream.write(dataToServe, 0, (int) file.length());
-                        bufferedOutputStream.flush();
-                    } catch(FileNotFoundException fnfe) {
-                        System.out.println("Resource not found: " + fnfe);
-                        sendError(404, printWriter, request[1]);
+                    /* Shut down the server if the shut down command was received. */
+                    if(request[1].equals(Configuration.SHUTDOWN_COMMAND)) {
+                        shutdown = true;
+                        sendMessage(200, printWriter, request[1]);
+                    } else {
+                        /* Get the resource and return it. */
+                        File file = new File(Configuration.RESOURCE_DIRECTORY, request[1].toLowerCase());
+                        byte[] dataToServe = new byte[(int) file.length()];
+                        try (FileInputStream fileInputStream = new FileInputStream(file)) {
+                            int bytes = fileInputStream.read(dataToServe);
+                            printWriter.println("HTTP/1.1 200 OK");
+                            printWriter.println("Server: Basic HTTP Server 1.0");
+                            printWriter.println("Date: " + new Date());
+                            printWriter.println("Content-type: " + getContentType(request[1]));
+                            printWriter.println("Content-length: " + (int) file.length());
+                            printWriter.println();
+                            printWriter.flush();
+                            if(bytes > 0) {
+                                bufferedOutputStream.write(dataToServe, 0, (int) file.length());
+                                bufferedOutputStream.flush();
+                            }
+                        } catch (FileNotFoundException fnfe) {
+                            System.out.println("Resource not found: " + fnfe);
+                            sendMessage(404, printWriter, request[1]);
+                        }
                     }
                 } else {
                     /* Only GET is implemented. */
                     System.out.println("Request of type " + request[0] + " rejected.");
-                    sendError(501, printWriter, request[0]);
+                    sendMessage(501, printWriter, request[0]);
                 }
             }
         } catch(IOException ioe) {
@@ -90,11 +100,16 @@ public class Engine implements Runnable {
         Statistician.endRequest(endTime - startTime);
     }
 
-    private void sendError(int type, PrintWriter printWriter, String request) {
+    private void sendMessage(int type, PrintWriter printWriter, String request) {
 
         String header, title, body;
 
         switch(type) {
+            case 200:
+                header = "HTTP/1.1 200 OK";
+                title = "OK";
+                body = "Basic HTTP Server: ";
+                break;
             case 404:
                 header = "HTTP/1.1 404 File Not Found";
                 title = "Not Implemented";
