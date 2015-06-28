@@ -42,24 +42,50 @@ public class Engine implements Runnable {
         Statistician.startRequest();
         long startTime = System.nanoTime();
 
+        try(InputStream inputStream = socket.getInputStream();
+            OutputStream outputStream = socket.getOutputStream()) {
+
+            SimpleServletRequest request = new SimpleServletRequest(inputStream);
+            SimpleServletResponse response = new SimpleServletResponse(outputStream, request);
+            if(request.getHeader("Type").equals("GET")) {
+                response.sendResource();
+            } else {
+
+            }
+
+        } catch(IOException ioe) {
+            System.err.println("I/O error with socket " + Configuration.PORT + ": " + ioe);
+        } finally {
+            try {
+                socket.close();
+            } catch(Exception e) {
+                System.err.println("Unable to close socket " + Configuration.PORT + " connection: " + e);
+            }
+        }
+        /*
         try(BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter printWriter = new PrintWriter(socket.getOutputStream());
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream())) {
             /* Parse input. */
+        /*
             String input = bufferedReader.readLine();
             if(input != null) {
                 String[] request = input.split(" ");
                 /* Handle input verbs. */
+        /*
                 if (request[0].toUpperCase().equals("GET")) {
                     System.out.println("\nServing " + request[1]);
                     /* Serve up the default file if none was specified in the HTTP request. */
+        /*
                     if(request[1].endsWith("/")) request[1] += Configuration.DEFAULT_FILE;
                     /* Shut down the server if the shut down command was received. */
+        /*
                     if(request[1].equals(Configuration.SHUTDOWN_COMMAND)) {
                         shutdown = true;
                         sendMessage(200, printWriter, request[1]);
                     } else {
                         /* Get the resource and return it. */
+        /*
                         File file = new File(Configuration.RESOURCE_DIRECTORY, request[1].toLowerCase());
                         byte[] dataToServe = new byte[(int) file.length()];
                         try (FileInputStream fileInputStream = new FileInputStream(file)) {
@@ -82,6 +108,7 @@ public class Engine implements Runnable {
                     }
                 } else {
                     /* Only GET is implemented. */
+        /*
                     System.out.println("Request of type " + request[0] + " rejected.");
                     sendMessage(501, printWriter, request[0]);
                 }
@@ -95,6 +122,7 @@ public class Engine implements Runnable {
                 System.err.println("Unable to close socket " + Configuration.PORT + " connection: " + e);
             }
         }
+        */
 
         long endTime = System.nanoTime();
         Statistician.endRequest(endTime - startTime);
