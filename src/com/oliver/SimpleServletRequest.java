@@ -1,9 +1,9 @@
 package com.oliver;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -17,11 +17,14 @@ public class SimpleServletRequest {
 
         request = new HashMap<>();
 
-        try(BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
+        try {
+            /* Do not use a try with resources here as the socket will be closed and the response will fail. */
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
             /* Parse input. */
             String input = bufferedReader.readLine();
+            if(input == null) return;
             boolean parseRequestLine = true;
-            while(input != null) {
+            while(!input.isEmpty()) {
                 System.out.println(input);
                 if(parseRequestLine) {
                     parseRequest(input);
@@ -108,6 +111,7 @@ public class SimpleServletRequest {
 
         String[] terms = input.split(" ");
         request.put("Type", terms[0].toUpperCase());
+        /* Serve up the default file if none was specified in the HTTP request. */
         if(terms[1].endsWith("/")) terms[1] += Configuration.DEFAULT_FILE;
         request.put("UrlPath", terms[1]);
 
@@ -141,7 +145,7 @@ public class SimpleServletRequest {
         for(int i = 0; i < input.length(); i++) {
             if(input.charAt(i) == ':') {
                 if(i + 2 < input.length() && i - 1 >= 0) {
-                    request.put(input.substring(0, i - 1), input.substring(i + 2));
+                    request.put(input.substring(0, i), input.substring(i + 2));
                 }
                 break;
             }
