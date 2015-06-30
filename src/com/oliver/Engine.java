@@ -3,11 +3,17 @@ package com.oliver;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Engine implements Runnable {
 
     private Socket socket;
     private static boolean shutdown = false;
+    /* The high level directory of the files the server may serve. */
+    public static File RESOURCE_DIRECTORY = null;
+    /* The high level directory of the servlets the server may serve. */
+    public static File SERVLET_DIRECTORY = null;
 
     public Engine(Socket socket) {
 
@@ -15,6 +21,12 @@ public class Engine implements Runnable {
     }
 
     public static void main(String[] args) {
+
+        /* Set the resource and servlet directories. */
+        Path currentRelativePath = Paths.get("");
+        String s = currentRelativePath.toAbsolutePath().toString();
+        RESOURCE_DIRECTORY = new File(s + Configuration.RESOURCES);
+        SERVLET_DIRECTORY = new File(s + Configuration.SERVLETS);
 
         /* Establish a listener. */
         try {
@@ -44,16 +56,20 @@ public class Engine implements Runnable {
         try(InputStream inputStream = socket.getInputStream();
             OutputStream outputStream = socket.getOutputStream()) {
 
-            SimpleServletRequest request = new SimpleServletRequest(inputStream);
-            SimpleServletResponse response = new SimpleServletResponse(outputStream, request);
+            ServletRequest request = new ServletRequest(inputStream);
+            ServletResponse response = new ServletResponse(outputStream, request);
 
             if (request.getHeader("Type") != null && request.getHeader("Type").equals("GET")) {
                 System.out.println("\nServing " + request.getUrlPath());
                 /* Shut down the server if the shut down command was received. */
-                if (request.getUrlPath().equals(Configuration.SHUTDOWN_COMMAND)) {
+                if(request.getUrlPath().equals(Configuration.SHUTDOWN_COMMAND)) {
                     shutdown = true;
                     response.setStatusCode(200);
                     response.sendMessage();
+                /* Process servlets. */
+                } else if(request.getUrlPath().toLowerCase().startsWith(Configuration.SERVLET)) {
+                    ServletProcessor servletProcessor = new ServletProcessor();
+                    servletProcessor.process(request, response);
                 } else {
                 /* Send a static resource to the client. */
                     response.sendResource();

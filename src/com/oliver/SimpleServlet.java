@@ -1,9 +1,6 @@
 package com.oliver;
 
-public class SimpleServlet {
+public interface SimpleServlet {
 
-    public void doGet(SimpleServletRequest request, SimpleServletResponse response) {
-
-
-    }
+    void doGet(SimpleServletRequest request, SimpleServletResponse response);
 }

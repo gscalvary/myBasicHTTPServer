@@ -111,6 +111,7 @@
   
   <property name="mybasichttpserver.output.dir" value="${module.mybasichttpserver.basedir}/out/production/myBasicHTTPServer"/>
   <property name="mybasichttpserver.testoutput.dir" value="${module.mybasichttpserver.basedir}/out/test/myBasicHTTPServer"/>
+  <property name="mybasichttpserver.servlet.dir" value="${module.mybasichttpserver.basedir}/resources/servlets"/>
   
   <path id="mybasichttpserver.module.bootclasspath">
     <!-- Paths to be included in compilation bootclasspath -->
@@ -168,6 +169,9 @@
         <type type="file"/>
       </fileset>
     </copy>
+
+    <move file="${mybasichttpserver.output.dir}/HelloBlizzardServlet.class" todir="${mybasichttpserver.servlet.dir}"/>
+
   </target>
   
   <target name="compile.module.mybasichttpserver.tests" depends="compile.module.mybasichttpserver.production" description="compile module myBasicHTTPServer; test classes" unless="skip.tests"/>
@@ -175,6 +179,7 @@
   <target name="clean.module.mybasichttpserver" description="cleanup module">
     <delete dir="${mybasichttpserver.output.dir}"/>
     <delete dir="${mybasichttpserver.testoutput.dir}"/>
+    <delete dir="${mybasichttpserver.servlet.dir}"/>
   </target>
   
   <target name="init" description="Build initialization">
