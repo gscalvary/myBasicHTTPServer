@@ -189,6 +189,11 @@
   <target name="clean" depends="clean.module.mybasichttpserver" description="cleanup all"/>
   
   <target name="build.modules" depends="init, clean, compile.module.mybasichttpserver" description="build all modules"/>
-  
-  <target name="all" depends="build.modules" description="build all"/>
+
+  <target name="run" depends="build.modules" description="run the web server">
+    <java fork="true" classname="com.oliver.Engine" classpath="${mybasichttpserver.output.dir}"/>
+  </target>
+
+  <target name="all" depends="run" description="build, configure and run"/>
+  <!--<target name="all" depends="build.modules" description="build all"/>-->
 </project>

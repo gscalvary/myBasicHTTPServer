@@ -113,7 +113,6 @@ public class ServletRequest implements SimpleServletRequest {
         request.put("Type", terms[0].toUpperCase());
         /* Serve up the default file if none was specified in the HTTP request. */
         if(terms[1].endsWith("/")) terms[1] += Configuration.DEFAULT_FILE;
-        request.put("UrlPath", terms[1]);
 
         parseURL(terms[1]);
     }
@@ -122,9 +121,10 @@ public class ServletRequest implements SimpleServletRequest {
 
         if(input == null || input.isEmpty()) return;
 
-        String[] terms = input.split("/?");
+        String[] terms = input.split("\\?");
 
-        parseURLParameters(terms[1]);
+        request.put("UrlPath", terms[0]);
+        if(terms.length == 2) parseURLParameters(terms[1]);
     }
 
     private void parseURLParameters(String input) {
@@ -134,7 +134,7 @@ public class ServletRequest implements SimpleServletRequest {
         String[] terms = input.split("&");
         for(String term : terms) {
             String[] pair = term.split("=");
-            request.put(pair[0], pair[1]);
+            if(pair.length == 2) request.put(pair[0], pair[1]);
         }
     }
 
